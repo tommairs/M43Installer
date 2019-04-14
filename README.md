@@ -13,7 +13,8 @@ The general steps are:
  Any specific instructions are buried in the script and are typically exposed as part of the Bash script.
  There is very little (if any) field validation so be precise in your answers.
  
- **Secure_HTTP_nginx** can apply to any of the V4 builds and can be applied after the install is complete.  It is just a fast way to make all the changes needed to secure nginx.
+ **Secure_HTTP_nginx** can apply to any of the V4 builds and can be applied after the install is complete.  It is just a fast way to make all the changes needed to secure nginx.  If you want to deploy that, it is included in an earlier repo here: https://github.com/SparkPost/M42Installer/blob/master/Secure_HTTP_nginx
+ 
  
  
  
