@@ -6,13 +6,13 @@ clear
 echo Installing Momo 4.3.0 - PoC Singlenode MTA Installer version
 echo
 echo Please send the MAC below to licensing@messagesystems.com to receive a valid license
-ifconfig |grep -i HWaddr
+ifconfig |grep -i ether
 echo
 
 echo "Press ENTER/RETURN to continue"
 read R
 
-echo Launch a CentOS 7.6 or newer instance 
+echo Launch a CentOS 7.2 or newer instance 
 echo \(IE: CentOS Linux 7 x86_64 HVM EBS 1704_01 (ami-51076231)\) 
 echo Select instance type m3.medium, \(recommended\) click NEXT
 echo Select "Protect against accidental termination", click NEXT
@@ -56,8 +56,8 @@ echo "What timezone is the server in? (EST,CST,MST,PST)"
 read TZ
 
 # Alternately set these manually
-FNAME="Development Server"
-MYFQDN="dev4.trymsys.net"
+FNAME="M4.3 Development Server"
+MYFQDN="dev43.trymsys.net"
 USERNAME="Tom Mairs"
 EMAIL="tom.mairs@sparkpost.com"
 TZ=MST
@@ -172,10 +172,11 @@ service postfix stop
 service qpidd stop
 /sbin/chkconfig qpidd off
 
-echo 
-echo "Resizing the drive..." 
-echo "..............................."
-resize2fs /dev/xvde
+# This no longer seems necessary
+#echo 
+#echo "Resizing the drive..." 
+#echo "..............................."
+#resize2fs /dev/xvde
 
 echo
 echo "Updating the swap file..." 
@@ -204,8 +205,9 @@ echo "..............................."
 yum -y install perl mcelog sysstat ntp gdb lsof.x86_64 wget yum-utils bind-utils telnet mlocate lynx unzip sudo
 yum -y install make gcc curl cpan mysql*
 
-
-echo "DOWNLOAD the 4.2.28.1 version of Momentum"
+cd /var/tmp
+echo "DOWNLOAD the 4.3.0 version of Momentum"
+echo "(https://support.messagesystems.com/package.php/momentum-mta-bundle-4.3.0.67725.rhel7.x86_64.tar.gz)"
 echo " or SCP the bundle to /var/tmp" 
 echo "Before continuing"
 echo
@@ -251,9 +253,11 @@ pwd >/var/tmp/inst.dir
 yum install -y --config momentum.repo --enablerepo momentum \
 msys-ecelerity-config-server \
 msys-role-db \
+msys-ecelerity-mobility-db  \
 msys-role-mta \
 msys-role-mobility \
-msys-ecelerity-mobility-db 
+msys-ecelerity-engagement-proxy
+
 
 /opt/msys/ecelerity/bin/ec_lic -f
 
@@ -311,15 +315,18 @@ EOT
 
 sed -i -e 's|/opt/msys/etc/installer/eccmgr.d/||' conf/default/eccluster.conf
 sed -i -e 's|/opt/msys/etc/installer/ecelerity.d/|ecdb.conf|' conf/default/ecelerity.conf
-# THESE NEED TO BE FIXED
-#sed -i -e 's|event_hydrant "event_collector" {\r\n}|#event_hydrant "event_collector"{\r\n#}|' conf/default/ecelerity.conf
+
+
+## This needs to be fixed
+#sed -i -e 's|event_hydrant "event_collector" \n|#event_hydrant "event_collector" \n#|' conf/default/ecelerity.conf
 #sed -i -e 's|event_hose "momentum_metrics"{\n}|#event_hose "momentum_metrics"{\n#}|' conf/default/ecelerity.conf
 
 sudo -u ecuser ../bin/eccfg commit -m 'Add ecdb config' --username admin \
    --add-all --password $ADMINPASS
 
 service ecelerity start
-service msys-riak start
+# No longer needed
+#service msys-riak start
 
 
 # To fix the ecconfig stack trace problem
