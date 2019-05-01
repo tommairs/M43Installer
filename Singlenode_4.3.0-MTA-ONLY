@@ -203,7 +203,48 @@ echo "Adding required packages..."
 echo "..............................."
 
 yum -y install perl mcelog sysstat ntp gdb lsof.x86_64 wget yum-utils bind-utils telnet mlocate lynx unzip sudo
-yum -y install make gcc curl cpan mysql*
+yum -y install make gcc curl cpan mysql* firewalld 
+
+#Make sure it all stays up to date
+#Run a yum update at 3AM daily
+echo "0 3 * * * root /usr/bin/yum update -y >/dev/null 2>&1">/etc/cron.d/yum-updates
+
+systemctl stop iptables.service
+systemctl stop ip6tables.service
+systemctl mask iptables.service
+systemctl mask ip6tables.service
+
+systemctl enable ntpd.service
+systemctl start  ntpd.service
+
+systemctl stop  postfix.service
+systemctl disable postfix.service
+
+systemctl stop  qpidd.service
+systemctl disable qpidd.service
+
+
+
+echo "ZONE=public
+" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+
+systemctl stop firewalld
+systemctl start firewalld.service
+firewall-cmd --set-default-zone=public
+firewall-cmd --zone=public --change-interface=eth0
+firewall-cmd --zone=public --permanent --add-service=http
+firewall-cmd --zone=public --permanent --add-service=https
+firewall-cmd --zone=public --permanent --add-service=ssh
+firewall-cmd --zone=public --permanent --add-service=smtp
+firewall-cmd --zone=public --permanent --add-port=587/tcp
+firewall-cmd --zone=public --permanent --add-port=81/tcp
+firewall-cmd --zone=public --permanent --add-port=2081/tcp
+firewall-cmd --zone=public --permanent --add-port=2084/tcp
+
+systemctl enable firewalld
+
+
+
 
 cd /var/tmp
 echo "DOWNLOAD the 4.3.0 version of Momentum"
