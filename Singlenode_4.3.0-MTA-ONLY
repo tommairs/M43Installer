@@ -1,4 +1,12 @@
 #!/bin/bash
+###################################
+# IMPORTANT!!!
+# DO NOT run this as a bash script at this time.
+# There are several parts of this that need to be run manually still
+# Feel free to copy and paste this in logical sections acter freading CAREFULLY through the script.
+# If you dont understand what you are looking at then you are in the wrong place.
+# You have been warned.
+###################################
 
 # This is a full single node installer for Momo 4.3.0 MTA-ONLY
 
