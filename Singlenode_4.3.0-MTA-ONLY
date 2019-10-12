@@ -42,7 +42,7 @@ echo move this installer to that server and execute it there
 #alter the following vars then paste most of the rest...
 echo Send this MAC to licensing@messagesystems.com and ask for a key
 
-ifconfig |grep -i HWaddr
+ifconfig |grep -i ether
 echo
 
 echo "If you have already done all of the above, press ENTER/RETURN to continue"
