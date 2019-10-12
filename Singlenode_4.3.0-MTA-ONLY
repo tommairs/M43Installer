@@ -48,6 +48,13 @@ echo
 echo "If you have already done all of the above, press ENTER/RETURN to continue"
 read R
 
+
+#########################################################
+# First build the OS environment ...
+#########################################################
+
+
+
 echo "Enter the friendly name of this server (IE: \"my dev server\")"
 read FNAME
 
@@ -122,25 +129,6 @@ echo 'export TZ=$MYTZ' >> /etc/profile
 export TZ=$MYTZ
 
 
-echo "
-*filter
-:INPUT ACCEPT [0:0]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [82:15000]
--A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
--A INPUT -p icmp -j ACCEPT
--A INPUT -i lo -j ACCEPT
--A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
--A INPUT -i eth0 -p tcp -m tcp --dport 25 -j ACCEPT
--A INPUT -i eth0 -p tcp -m tcp --dport 80 -j ACCEPT
--A INPUT -i eth0 -p tcp -m tcp --dport 81 -j ACCEPT
--A INPUT -i eth0 -p tcp -m tcp --dport 443 -j ACCEPT
--A INPUT -i eth0 -p tcp -m tcp --dport 587 -j ACCEPT
--A INPUT -j REJECT --reject-with icmp-host-prohibited
--A FORWARD -j REJECT --reject-with icmp-host-prohibited
-COMMIT
-" > /etc/sysconfig/iptables
-service iptables restart
 sed -i "s/HOSTNAME=\(.*\)/HOSTNAME=$HOSTNAME/" /etc/sysconfig/network
 echo 'export TZ=$MYTZ' >> /etc/profile
 export TZ=$MYTZ
@@ -169,16 +157,6 @@ sudo /sbin/sysctl -p /etc/sysctl.conf
 
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config  
 /usr/sbin/setenforce 0
-
-
-cd /var/tmp
-chkconfig ntpd on 
-/etc/init.d/ntpd start 
-service postfix stop
-/sbin/chkconfig postfix off
-
-service qpidd stop
-/sbin/chkconfig qpidd off
 
 # This no longer seems necessary
 #echo 
@@ -210,6 +188,7 @@ echo
 echo "Adding required packages..."
 echo "..............................."
 
+# Install any supporting packages that we may want for later...
 yum -y install perl mcelog sysstat ntp gdb lsof.x86_64 wget yum-utils bind-utils telnet mlocate lynx unzip sudo
 yum -y install make gcc curl cpan mysql* firewalld 
 
@@ -217,10 +196,13 @@ yum -y install make gcc curl cpan mysql* firewalld
 #Run a yum update at 3AM daily
 echo "0 3 * * * root /usr/bin/yum update -y >/dev/null 2>&1">/etc/cron.d/yum-updates
 
+
+# Turn off any services that we do not want
+# Turn on any ones that we do need
 systemctl stop iptables.service
 systemctl stop ip6tables.service
-systemctl mask iptables.service
-systemctl mask ip6tables.service
+systemctl disable iptables.service
+systemctl disable ip6tables.service
 
 systemctl enable ntpd.service
 systemctl start  ntpd.service
@@ -231,7 +213,7 @@ systemctl disable postfix.service
 systemctl stop  qpidd.service
 systemctl disable qpidd.service
 
-
+# Update and start Firewalld
 
 echo "ZONE=public
 " >> /etc/sysconfig/network-scripts/ifcfg-eth0
@@ -252,7 +234,9 @@ firewall-cmd --zone=public --permanent --add-port=2084/tcp
 systemctl enable firewalld
 
 
-
+#########################################################
+# Now deal with the Momentum part
+#########################################################
 
 cd /var/tmp
 echo "DOWNLOAD the 4.3.0 version of Momentum"
@@ -320,6 +304,9 @@ echo $HOSTNAME > /opt/msys/etc/.dbhost
 
 service msyspg start
 sleep 40
+
+# You should probably deal with that part above before continuing...
+
 cd /opt/msys/ecelerity/etc
 ../bin/init_schema --password $SVCPASSWD --admin-password $ADMINPASS
 
@@ -379,11 +366,13 @@ service ecelerity start
 
 
 # To fix the ecconfig stack trace problem
+# Not sure if this is still relevant in 4.3  [FIXME]
+
 sed -i 's/use strict;/$ENV{GIMLI_WATCHDOG_INTERVAL} = 300;\nuse strict;/' /etc/init.d/ecconfigd
 service ecconfigd restart
 
 ###########################################################
-#These are custom for the SETEAM install
+# Now customize your install and make it pretty
 ###########################################################
 
 # To label the server with a descriptive and helpful MOTD
@@ -419,23 +408,31 @@ echo "sh /etc/motd.sh" >> /etc/profile
 
 
 
-#######################################################################################
-#
-# WARNING 
-#
-# This following section is to give users server access
-# You may want to edit this section before running the script
-#
-#######################################################################################
-# to give seteam users sudo access to the server
-sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config   
+##############################################
+# Now secure it
+##############################################
+echo "
+## Configure for pubkey only logins
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+UsePAM no
+" >> /etc/ssh/sshd_config
+
+# Remember to add user accounts and their public keys 
+# IE: 
+#  useradd username
+#  ssh-keygen -t dsa (or use an existing key pair)
+#  Copy the public key to /home/username/.ssh/authorized_keys
+#  chown -R username:username /home/username/.ssh
+#  chmod 700 /home/username/.ssh
+#  chmod 600 /home/username/.ssh/authorized_keys
+
+
+
+
+# Also make sure appropriate people are in the sudoers list
 echo "seteam        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 service sshd restart
-
-useradd seteam
-passwd seteam
-#######################################################################################
-#######################################################################################
 
 
 #######################################################################################
@@ -444,6 +441,8 @@ passwd seteam
 #
 # This following section generates and alters system configuration
 # You may want to edit this section before running the script
+# This section is NOT required, but can save you a bunch of time with Momentum configuration
+# Please READ IT FIRST before allying any of the changes below !!!!!!!!
 #
 #######################################################################################
 
