@@ -8,19 +8,11 @@
 # You have been warned.
 ###################################
 
-# This is a full single node installer for Momo 4.3.0 MTA-ONLY
+# This is a single node installer for Momo 4.3.1 MTA-ONLY
 
 clear
-echo Installing Momo 4.3.0 - PoC Singlenode MTA Installer version
-echo
-echo Please send the MAC below to licensing@messagesystems.com to receive a valid license
-ifconfig |grep -i ether
-echo
-
-echo "Press ENTER/RETURN to continue"
-read R
-
-echo Launch a CentOS 7.2 or newer instance 
+echo  ###### READ THIS FIRST ######
+echo Launch a CentOS 7.3 or newer instance 
 echo \(IE: CentOS Linux 7 x86_64 HVM EBS 1704_01 (ami-51076231)\) 
 echo Select instance type m3.medium, \(recommended\) click NEXT
 echo Select "Protect against accidental termination", click NEXT
@@ -30,22 +22,29 @@ echo Select a security group - I use "ALL TCP"
 echo click LAUNCH and select or create a key pair so you can log in for further configuration
 echo 
 echo Before going further, create a resolvable domain in DNS and ensure that is is resolvable.
-
+echo
 echo open a shell and log in 
 echo IE: ssh -i yourname.pem centos@ec2-54-190-177-235.us-west-2.compute.amazonaws.com
+echo 
+echo Make sure you are running this as sudo or root (sudo -s)
+echo 
+echo DOWNLOAD the 4.3.1 version of Momentum and any accessory bundles and place them in /var/tmp
+echo Before continuing
+echo
+echo if you have NOT completed all of the above, press ^C and complete those steps first.
+echo  ###### END OF README ######
+echo
+echo 
+echo "If you are ready to continue, press ENTER/RETURN to continue"
+read R
 
-echo move this installer to that server and execute it there
-
-# if running this manually, make sure you are sudo or root first
-# sudo -s
-
-#alter the following vars then paste most of the rest...
-echo Send this MAC to licensing@messagesystems.com and ask for a key
-
+echo Installing Momo 4.3.1 - PoC Singlenode MTA Installer version
+echo
+echo Please send the MAC below to licensing@messagesystems.com to receive a valid license
 ifconfig |grep -i ether
 echo
 
-echo "If you have already done all of the above, press ENTER/RETURN to continue"
+echo "Press ENTER/RETURN to continue"
 read R
 
 
@@ -71,11 +70,11 @@ echo "What timezone is the server in? (EST,CST,MST,PST)"
 read TZ
 
 # Alternately set these manually
-FNAME="M4.3 Development Server"
-MYFQDN="dev43.trymsys.net"
-USERNAME="Tom Mairs"
-EMAIL="tom.mairs@sparkpost.com"
-TZ=MST
+#FNAME="M4.3.1 Demo Server"
+#MYFQDN="demo.trymsys.net"
+#USERNAME="Tom Mairs"
+#EMAIL="tom.mairs@sparkpost.com"
+#TZ=MST
 
 
 
@@ -95,10 +94,6 @@ TZ=MST
       MYTZ="America/Los_Angeles"
    fi
 
-echo "PLEASE WAIT....."
-
-# send MAC to licensing team for appropriate license.
-
  # Use $HOSTNAME instead
  # MYHOST=`hostname -f`
  if [ $MYFQDN="" ]; then
@@ -116,18 +111,12 @@ echo Time Zone = $MYTZ
 echo
 
 export DEFAULT=/opt/msys/ecelerity/etc/conf/default/
-
-
-###########################################################
-# Now paste most of the rest... (stop at #EOP# Marker)
-###########################################################
  
 echo "Applying environment changes..."
 echo "..............................."
 
 echo 'export TZ=$MYTZ' >> /etc/profile
 export TZ=$MYTZ
-
 
 sed -i "s/HOSTNAME=\(.*\)/HOSTNAME=$HOSTNAME/" /etc/sysconfig/network
 echo 'export TZ=$MYTZ' >> /etc/profile
@@ -157,12 +146,6 @@ sudo /sbin/sysctl -p /etc/sysctl.conf
 
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config  
 /usr/sbin/setenforce 0
-
-# This no longer seems necessary
-#echo 
-#echo "Resizing the drive..." 
-#echo "..............................."
-#resize2fs /dev/xvde
 
 echo
 echo "Updating the swap file..." 
@@ -238,19 +221,6 @@ systemctl enable firewalld
 # Now deal with the Momentum part
 #########################################################
 
-cd /var/tmp
-echo "DOWNLOAD the 4.3.0 version of Momentum"
-echo "(https://support.messagesystems.com/package.php/momentum-mta-bundle-4.3.0.67725.rhel7.x86_64.tar.gz)"
-echo " or SCP the bundle to /var/tmp" 
-echo "Before continuing"
-echo
-
-
-echo "Press ENTER/RETURN to continue to LYNX or ^C to exit now."
-read R
-
-lynx https://support.messagesystems.com/docs
-
 
 cd /var/tmp
 MOMOVER=`find -name 'momentum-bundle*.tar.gz'`
@@ -283,14 +253,14 @@ read R
 ./setrepodir
 pwd >/var/tmp/inst.dir
 
+
 yum install -y --config momentum.repo --enablerepo momentum \
-msys-ecelerity-config-server \
-msys-role-db \
-msys-ecelerity-mobility-db  \
 msys-role-mta \
-msys-role-mobility \
+msys-ecelerity-mobility \
 msys-ecelerity-engagement-proxy
 
+cd /opt/msys/ecelerity/etc/sample-configs/default
+cp {ecelerity.conf,ecelerity-cluster.conf,common.conf} /opt/msys/ecelerity/etc/conf/default/
 
 /opt/msys/ecelerity/bin/ec_lic -f
 
@@ -301,75 +271,10 @@ export ADMINPASS=admin
 
 echo $HOSTNAME > /opt/msys/etc/.dbhost
 
-
-service msyspg start
-sleep 40
-
-# You should probably deal with that part above before continuing...
-
-cd /opt/msys/ecelerity/etc
-../bin/init_schema --password $SVCPASSWD --admin-password $ADMINPASS
-
-sed -i -e "s/UseCanonicalName DNS/ServerName $HOSTNAME/" ecconfigd.conf
-sed -i -e "s/Include \"/#Include \"/" ecconfigd.conf
-
-echo
-echo COPY the password below so you can paste it in the next prompt...
-echo $SVCPASSWD
-echo " ** IMPORTANT **"
-echo "Copy the password above to your clip board then paste it for the next prompt" 
-echo " ** IMPORTANT **"
-echo
-
-/opt/msys/ecelerity/bin/create_ssl_cert ecconfigd $HOSTNAME /var/ecconfigd/apache
-/opt/msys/3rdParty/apache/sbin/htdigest -c /var/ecconfigd/repo/svn-auth.htdigest  "ecconfigd repo" ecuser
-
-echo "Deal with the SERVICE password above first... Press ^C to exit or ENTER to continue"
-read R
-
-echo
-echo use "admin" in the next prompt...
-echo
-
-/opt/msys/3rdParty/apache/sbin/htdigest /var/ecconfigd/repo/svn-auth.htdigest "ecconfigd repo" admin 
-
-echo "Deal with the ADMIN password above first... Press ^C to exit or ENTER to continue"
-read R
-
-service ecconfigd start
-
-cd /opt/msys/ecelerity/etc
-chmod g+ws .
-sudo -u ecuser /opt/msys/ecelerity/bin/eccfg bootstrap --singlenode  --username admin --password $ADMINPASS
-
-cd /opt/msys/ecelerity/etc
-cat << EOT > conf/default/ecdb.conf
-Datasource "ecdb" {
-  uri = ( "pgsql:host=$HOSTNAME;dbname=ecelerity;user=ecuser;password=$SVCPASSWD" )
-}
-EOT
-
-sed -i -e 's|/opt/msys/etc/installer/eccmgr.d/||' conf/default/eccluster.conf
-sed -i -e 's|/opt/msys/etc/installer/ecelerity.d/|ecdb.conf|' conf/default/ecelerity.conf
-
-
-## This needs to be fixed
-#sed -i -e 's|event_hydrant "event_collector" \n|#event_hydrant "event_collector" \n#|' conf/default/ecelerity.conf
-#sed -i -e 's|event_hose "momentum_metrics"{\n}|#event_hose "momentum_metrics"{\n#}|' conf/default/ecelerity.conf
-
-sudo -u ecuser ../bin/eccfg commit -m 'Add ecdb config' --username admin \
-   --add-all --password $ADMINPASS
-
 service ecelerity start
-# No longer needed
-#service msys-riak start
 
+############################################################################
 
-# To fix the ecconfig stack trace problem
-# Not sure if this is still relevant in 4.3  [FIXME]
-
-sed -i 's/use strict;/$ENV{GIMLI_WATCHDOG_INTERVAL} = 300;\nuse strict;/' /etc/init.d/ecconfigd
-service ecconfigd restart
 
 ###########################################################
 # Now customize your install and make it pretty
