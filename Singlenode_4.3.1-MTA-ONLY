@@ -1,14 +1,17 @@
 #!/bin/bash
-###################################
-# IMPORTANT!!!
-# DO NOT run this as a bash script at this time.
-# There are several parts of this that need to be run manually still
-# Feel free to copy and paste this in logical sections acter freading CAREFULLY through the script.
-# If you dont understand what you are looking at then you are in the wrong place.
-# You have been warned.
-###################################
 
 # This is a single node installer for Momo 4.3.1 MTA-ONLY
+
+
+###################################
+# IMPORTANT!!!
+# Please read through this script first to make sure you know what it is doing
+# Make any variable changes before running it.  Pay perticular attention to the 
+# customization section starting aproximately line 345
+# You have been warned.
+# Also - If you need to provide SSH access pay attention to the configuration
+# lines startig approximately line 315
+###################################
 
 clear
 echo  ###### READ THIS FIRST ######
