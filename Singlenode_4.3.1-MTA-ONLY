@@ -12,8 +12,9 @@
 
 clear
 echo  ###### READ THIS FIRST ######
+echo ------------------- README ----------------------------------
 echo Launch a CentOS 7.3 or newer instance 
-echo \(IE: CentOS Linux 7 x86_64 HVM EBS 1704_01 (ami-51076231)\) 
+echo \(IE: CentOS Linux 7 x86_64 HVM EBS 1704_01 \(ami-51076231\)\) 
 echo Select instance type m3.medium, \(recommended\) click NEXT
 echo Select "Protect against accidental termination", click NEXT
 echo Update the volume size to 100Mb
@@ -26,7 +27,7 @@ echo
 echo open a shell and log in 
 echo IE: ssh -i yourname.pem centos@ec2-54-190-177-235.us-west-2.compute.amazonaws.com
 echo 
-echo Make sure you are running this as sudo or root (sudo -s)
+echo Make sure you are running this as sudo or root \(sudo -s\)
 echo 
 echo DOWNLOAD the 4.3.1 version of Momentum and any accessory bundles and place them in /var/tmp
 echo Before continuing
@@ -46,6 +47,10 @@ echo
 
 echo "Press ENTER/RETURN to continue"
 read R
+
+## NOTE: If you are replacing a previousl installation, remove all the remnants FIRST ##
+ yum remove -y msys-* vertica-*
+ rm -rf /opt/msys/ /opt/vertica/ /var/log/msys* /var/log/ec* /var/ecc* /var/db
 
 
 #########################################################
@@ -221,34 +226,28 @@ systemctl enable firewalld
 # Now deal with the Momentum part
 #########################################################
 
-
 cd /var/tmp
-MOMOVER=`find -name 'momentum-bundle*.tar.gz'`
-   if [ $MOMOVER = "" ]; then
       MOMOVER=`find -name 'momentum-mta-bundle*.tar.gz'`
-   fi
-   if [ $MOMOVER = "" ]; then
+   if [ "$MOMOVER" == "" ]; then
       echo "cannot continue - no install bundle found"
       exit
    fi
-MOMOREL='momentum-4.'`echo $MOMOVER | cut -d'.' -f 3-5`
-   if [ $MOMOREL = "" ]; then
       MOMOREL='momentum-mta-4.'`echo $MOMOVER | cut -d'.' -f 3-5`
-   fi
-   if [ $MOMOREL = "" ]; then
+   if [ "$MOMOREL" == "" ]; then
       echo "cannot continue - no install bundle found"
       exit
    fi
 
+echo Using $MOMOVER
+echo Starting at $MOMOREL
 
-echo 
-echo Unpacking version $MOMOREL . Please wait....
-echo ...
-tar -zxf $MOMOVER
-cd $MOMOREL/
+cd $MOMOREL
 
-echo "Installing from $MOMOREL.  press ^C to exit or ENTER to continue"
-read R
+
+echo "Installing from $MOMOREL. "
+echo
+echo
+
 
 ./setrepodir
 pwd >/var/tmp/inst.dir
@@ -259,6 +258,7 @@ msys-role-mta \
 msys-ecelerity-mobility \
 msys-ecelerity-engagement-proxy
 
+mkdir -p /opt/msys/ecelerity/etc/conf/default/
 cd /opt/msys/ecelerity/etc/sample-configs/default
 cp {ecelerity.conf,ecelerity-cluster.conf,common.conf} /opt/msys/ecelerity/etc/conf/default/
 
@@ -323,8 +323,8 @@ ChallengeResponseAuthentication no
 UsePAM no
 " >> /etc/ssh/sshd_config
 
-# Remember to add user accounts and their public keys 
-# IE: 
+## Remember to add user accounts and their public keys 
+## IE: 
 #  useradd username
 #  ssh-keygen -t dsa (or use an existing key pair)
 #  Copy the public key to /home/username/.ssh/authorized_keys
@@ -333,9 +333,9 @@ UsePAM no
 #  chmod 600 /home/username/.ssh/authorized_keys
 
 
-# Also make sure appropriate people are in the sudoers list
-echo "username        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
-service sshd restart
+## Also make sure appropriate people are in the sudoers list
+#echo "username        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
+#service sshd restart
 
 
 #######################################################################################
@@ -350,8 +350,8 @@ service sshd restart
 #######################################################################################
 
 
-echo "Now customizing configs...  press ^C to exit or ENTER to continue"
-read R
+echo "Now customizing configs... "
+echo
 
 mkdir $DEFAULT/lua
 mkdir $DEFAULT/conf.d
