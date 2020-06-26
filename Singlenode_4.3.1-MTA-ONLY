@@ -52,8 +52,8 @@ echo "Press ENTER/RETURN to continue"
 read R
 
 ## NOTE: If you are replacing a previousl installation, remove all the remnants FIRST ##
- yum remove -y msys-* vertica-*
- rm -rf /opt/msys/ /opt/vertica/ /var/log/msys* /var/log/ec* /var/ecc* /var/db
+# yum remove -y msys-* vertica-*
+# rm -rf /opt/msys/ /opt/vertica/ /var/log/msys* /var/log/ec* /var/ecc* /var/db
 
 
 #########################################################
