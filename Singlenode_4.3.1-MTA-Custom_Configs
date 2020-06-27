@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #######################################################################################
-#
 # WARNING 
+# This is intended to be applied after the initial Momentum install.  Plesae do that first.
 #
 # This following section generates and alters system configuration
 # You may want to edit this section before running the script
@@ -14,6 +14,12 @@
 
 echo "Now customizing configs... "
 echo
+
+export DEFAULT=/opt/msys/ecelerity/etc/conf/default/
+if [ $MYFQDN == ""]; then
+  echo "Enter your FQDN:"
+  read MYFQDN
+fi
 
 mkdir $DEFAULT/lua
 mkdir $DEFAULT/conf.d
