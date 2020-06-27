@@ -204,6 +204,7 @@ systemctl stop  qpidd.service
 systemctl disable qpidd.service
 
 # Update and start Firewalld
+systemctl enable firewalld
 
 echo "ZONE=public
 " >> /etc/sysconfig/network-scripts/ifcfg-eth0
