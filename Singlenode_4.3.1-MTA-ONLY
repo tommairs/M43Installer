@@ -337,3 +337,12 @@ UsePAM no
 ## Also make sure appropriate people are in the sudoers list
 #echo "username        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 #service sshd restart
+
+echo 
+echo 
+echo "Installation complete!"
+echo 
+echo 
+cat /etc/motd
+sh /etc/motd.sh
+
