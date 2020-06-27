@@ -122,11 +122,8 @@ export DEFAULT=/opt/msys/ecelerity/etc/conf/default/
 echo "Applying environment changes..."
 echo "..............................."
 
-echo "export TZ=$MYTZ" >> /etc/profile
-export TZ=$MYTZ
-
 sed -i "s/HOSTNAME=\(.*\)/HOSTNAME=$HOSTNAME/" /etc/sysconfig/network
-echo 'export TZ=$MYTZ' >> /etc/profile
+echo "export TZ=$MYTZ" >> /etc/profile
 export TZ=$MYTZ
 
 echo "
