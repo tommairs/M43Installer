@@ -85,25 +85,25 @@ read TZ
 
 
 
-   if [ $TZ = "EST" ]; then
+   if [ $TZ == "EST" ]; then
       MYTZ="America/New_York"
    fi
-   if [ $TZ = "CST" ]; then
+   if [ $TZ == "CST" ]; then
       MYTZ="America/Chicago"
    fi
-   if [ $TZ = "MST" ]; then
+   if [ $TZ == "MST" ]; then
       MYTZ="America/Edmonton"
    fi
-   if [ $TZ = "PST" ]; then
+   if [ $TZ == "PST" ]; then
       MYTZ="America/Los_Angeles"
    fi
-   if [ $MYTZ = "" ]; then
+   if [ $MYTZ == "" ]; then
       MYTZ="America/Los_Angeles"
    fi
 
  # Use $HOSTNAME instead
  # MYHOST=`hostname -f`
- if [ $MYFQDN="" ]; then
+ if [ $MYFQDN == "" ]; then
   MYFQDN=`hostname -f`
  fi 
   PUBLICIP=`curl -s checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//' `
@@ -124,6 +124,7 @@ echo "..............................."
 
 sed -i "s/HOSTNAME=\(.*\)/HOSTNAME=$HOSTNAME/" /etc/sysconfig/network
 echo "export TZ=$MYTZ" >> /etc/profile
+echo "export MYFQDN=$MYFQDN" >> /etc/profile
 export TZ=$MYTZ
 
 echo "
