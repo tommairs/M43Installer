@@ -3,14 +3,14 @@
 # This is a single node installer for Momo 4.3.1 MTA-ONLY
 
 
-###################################
+#####################################################################
 # IMPORTANT!!!
 # Please read through this script first to make sure you know what it is doing
 # Make any variable changes before running it.  
 #
 # Also - If you need to provide SSH access pay attention to the configuration
 # lines startig approximately line 315
-###################################
+#####################################################################
 
 clear
 echo  ###### READ THIS FIRST ######
@@ -244,12 +244,14 @@ cd /var/tmp
 echo Using $MOMOVER
 echo Starting at $MOMOREL
 
+echo 
+echo Unpacking version $MOMOREL . Please wait....
+echo ...
+tar -zxf $MOMOVER
 cd $MOMOREL
 
-
-echo "Installing from $MOMOREL. "
-echo
-echo
+echo "Installing from $MOMOREL.  press ^C to exit or ENTER to continue"
+read R
 
 
 ./setrepodir
