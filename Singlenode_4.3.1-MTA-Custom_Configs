@@ -21,6 +21,8 @@ if [ $MYFQDN == ""]; then
   read MYFQDN
 fi
 
+echo "deploying custom configs to $DEFAULT"
+
 mkdir $DEFAULT/lua
 mkdir $DEFAULT/conf.d
 
@@ -28,6 +30,8 @@ mkdir $DEFAULT/conf.d
 #################################
 # FBL Config
 #################################
+echo "Creating FBL config"
+
 echo "
 Enable_FBL_Header_Insertion = enabled
 
@@ -46,6 +50,8 @@ fbl {
 #################################
 # DKIM Config
 #################################
+echo "Creating DKIM config"
+
 echo "
 opendkim_sign = \"enabled\"
 
@@ -67,6 +73,8 @@ opendkim \"opendkim1\" {
 #################################
 # ADAPTIVE Config
 #################################
+echo "Creating Adaptive Delivery config"
+
 echo "
 adaptive_enabled = true
 adaptive_notification_interval = 5
@@ -97,6 +105,8 @@ inbound_audit {
 #################################
 # BINDING Config
 #################################
+echo "Creating Sample Binding config"
+
 echo "
 binding_group general {
 
@@ -117,6 +127,8 @@ binding_group general {
 #################################
 # General ecelerity config
 #################################
+echo "Turning Bounce config off"
+
 sed -i 's/Bounce_Domains /#Bounce_Domains /' $DEFAULT/ecelerity.conf
 sed -i 's/Bounce_Behavior /#Bounce_Behavior /' $DEFAULT/ecelerity.conf
 sed -i 's/Generate_bounces /#Generate_bounces /' $DEFAULT/ecelerity.conf
@@ -173,6 +185,8 @@ ESMTP_Listener{
 #################################
 # Mobile Config
 #################################
+echo "Setting up mobile config"
+
 echo "
 smpp_logger \"smpp_logger\"
 {
@@ -216,6 +230,8 @@ smpp {
 #################################
 # Lua Policy
 #################################
+echo "Adding custom Lua policy"
+
 echo "
 require(\"msys.core\");
 require(\"msys.db\");
