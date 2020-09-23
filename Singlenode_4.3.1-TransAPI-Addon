@@ -1,1 +1,121 @@
+#!/bin/bash
+
+# This is a SUPLIMENTAL installer for Momo 4.3.1 MTA
+#   in order to add Transmissions API, Engagement Tracking, SMTP-API, Nginx
+#
+# NOTE: The core 4.3.1 MTA MUST be installed first.
+
+
+#####################################################################
+# IMPORTANT!!!
+# Please read through this script first to make sure you know what it is doing
+# Make any variable changes before running it.  
+#
+#####################################################################
+
+clear
+
+# Replace these with any needed updates before running this script
+FNAME="M4.3 Development Server"
+MYFQDN="dev43.trymsys.net"
+USERNAME="Tom Mairs"
+EMAIL="tom.mairs@sparkpost.com"
+TZ=MST
+PUBLICIP=`curl -s checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//' `
+PRIVATEIP=`hostname -i`
+NODENAME=$PRIVATEIP
+
+
+# Enabling the Transmissions API:
+cp /opt/msys/ecelerity/etc/sample-configs/default/msg_gen.conf /opt/msys/ecelerity/etc/conf/default/conf.d/
+cd /opt/msys/ecelerity/etc/conf/default/conf.d/
+sed -i "s/__EXTERNAL_DNS_HOSTNAME__/$MYFQDN/" ./msg_gen.conf
+sed -i "s/^.*#UNCOMMENT-AS-NEEDED.*mta_id = 1\s .*\}$/  node $NODENAME \{ mta_id = 1  votes = 1 \} /" ./msg_gen.conf
+sed -i "s/cluster_cfg = true/cluster_cfg = false/" ./msg_gen.conf
+
+service ecelerity restart
+
+# Enabling SMTP API:
+cp /opt/msys/ecelerity/etc/sample-configs/default/smtpapi.conf /opt/msys/ecelerity/etc/conf/default/conf.d/
+
+echo "
+Esmtp_Listener {
+ Listen ":8025" {
+  open_tracking_enabled = true
+  click_tracking_enabled = true
+  # Change this to your external DNS hostname and external port
+  # number. This will appear in the tracked links.
+  tracking_domain = "__EXTERNAL_DNS_HOSTNAME__:81"
+  # HTTPS is also supported, but requires further configuration,
+  # and a TLS certificate valid for the external hostname.
+  click_tracking_scheme = "http"
+  open_tracking_scheme = "http"
+ }
+}" > /opt/msys/ecelerity/etc/conf/default/conf.d/smtp_api_listener.conf
+sed -i "s/__EXTERNAL_DNS_HOSTNAME__/$MYFQDN/" ./smtp_api_listener.conf
+
+service ecelerity restart
+
+
+# Enabling nginx:
+# First, test if this part is even ncessary. Skip if not.
+FILE=/opt/msys/3rdParty/nginx/conf.d/momo.loc
+if [ -f "$FILE" ]; then
+    echo "$FILE exists."
+    exit 1
+else
+    echo "Nginx needs to be installed, continuing..."
+fi
+
+
+cd /var/tmp
+      MOMOVER=`find -name 'momentum-mta-bundle*.tar.gz'`
+   if [ "$MOMOVER" == "" ]; then
+      echo "cannot continue - no install bundle found"
+      exit
+   fi
+      MOMOREL='momentum-mta-4.'`echo $MOMOVER | cut -d'.' -f 3-5`
+   if [ "$MOMOREL" == "" ]; then
+      echo "cannot continue - no install bundle found"
+      exit
+   fi
+
+echo Using $MOMOVER
+echo Starting at $MOMOREL
+
+echo 
+echo Unpacking version $MOMOREL . Please wait....
+echo ...
+tar -zxf $MOMOVER
+cd $MOMOREL
+
+./setrepodir
+
+yum install -y --config momentum.repo --enablerepo momentum msys-nginx
+
+cd /opt/msys/ecelerity/etc/sample-configs/nginx
+cp -i web_proxy.conf /opt/msys/3rdParty/nginx/conf.d/
+cp -i app.loc /opt/msys/3rdParty/nginx/conf.d/
+cp -i momo.loc /opt/msys/3rdParty/nginx/conf.d/
+cp -i default.cors /opt/msys/3rdParty/nginx/conf.d/
+cp -i momo_upstream.conf /opt/msys/3rdParty/nginx/conf.d/
+rm -rf /opt/msys/3rdParty/nginx/conf.d/click_proxy_upstream.conf
+cp -i click_proxy_upstream.conf /opt/msys/3rdParty/nginx/conf.d/
+
+sed -i "s/#UNCOMMENT-AS-NEEDED  server yourtnode01.yourdomain.tld:2081;/  server $PRIVATEIP:2081;/" /opt/msys/3rdParty/nginx/conf.d/click_proxy_upstream.conf 
+sed -i "s/#UNCOMMENT-AS-NEEDED  server yourmnode01.yourdomain.tld:2081;/  server $PRIVATEIP:2081;/" /opt/msys/3rdParty/nginx/conf.d/momo_upstream.conf
+
+
+# If using Webhooks...
+cp -i api_webhooks_upstream.conf /opt/msys/3rdParty/nginx/conf.d/
+sed -i "s/    #include \"..\/conf.d\/app.loc\";/    include \"..\/conf.d\/app.loc\";/"  /opt/msys/3rdParty/nginx/conf.d/web_proxy.conf
+sed -i "s/#UNCOMMENT-AS-NEEDED  server youranode01.yourdomain.tld:2084;/  server $PRIVATEIP:2084;/" /opt/msys/3rdParty/nginx/conf.d/api_webhooks_upstream.conf
+
+service msys-nginx configtest
+# Ensure the result of the above commant is "OK" before continuing.
+
+service msys-nginx start
+
+echo "Transmissions API installation complete"
+
 
