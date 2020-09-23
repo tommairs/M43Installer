@@ -1,1 +1,130 @@
+#!/bin/bash
+
+# This is a SUPPLEMENTAL installer for Momo 4.3.1 MTA
+#   in order to add Webhooks functionality
+#
+# NOTE: The core 4.3.1 MTA MUST be installed first.
+# If not installing the Transmissions API, please at least 
+#   install the nginx portion of that installer before starting 
+#   this as well.
+
+
+#####################################################################
+# IMPORTANT!!!
+# Please read through this script first to make sure you know what it is doing
+# Make any variable changes before running it.  
+#
+# If this install is on an IPv6 network STOP! Do not use this installer
+# Also: ensure you have downloaded the correct webhooks bundle for your architecture 
+#   from the support website and unpack the file to \var\tmp\
+#####################################################################
+
+clear
+
+# Replace these with any needed updates before running this script
+FNAME="M4.3 Development Server"
+MYFQDN="dev43.trymsys.net"
+USERNAME="Tom Mairs"
+EMAIL="tom.mairs@sparkpost.com"
+TZ=MST
+PUBLICIP=`curl -s checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//' `
+PRIVATEIP=`hostname -i`
+NODENAME=$PRIVATEIP
+
+cd /var/tmp
+
+tar -zxf momentum-4.3.x-webhooks*
+cd momentum-4.3.x-webhooks
+
+./setrepodir
+
+yum install -y --config momentum.repo --enablerepo momentum \
+msys-rabbitmq \
+msys-app-webhooks-api \
+msys-app-webhooks-etl
+
+# If you are installing on an IPv6 network, comment this line, do NOT execute it.
+sed -i "s/,{\"::1\", 5672}//" /opt/msys/3rdParty/etc/rabbitmq/rabbitmq.config
+
+service qpidd stop
+/sbin/chkconfig qpidd off
+export THIRDPARTY=/opt/msys/3rdParty
+export RABBITMQCTL="$THIRDPARTY/sbin/rabbitmqctl"
+export RABBITMQADMIN="$THIRDPARTY/sbin/rabbitmqadmin"
+service msys-rabbitmq start
+$RABBITMQADMIN declare exchange name=momentum_metrics type=topic
+$RABBITMQCTL add_user rabbitmq "p1-Vk0lXy"
+$RABBITMQCTL set_user_tags rabbitmq administrator
+$RABBITMQCTL set_permissions -p '/' rabbitmq '.*' '.*' '.*'
+$RABBITMQCTL delete_user guest
+
+mkdir -p /opt/msys/app/webhooks-api/config/
+mkdir -p /opt/msys/app/webhooks-etl/config/
+ 
+ 
+echo "
+{
+ \"application\": {
+  \"cassandraSupport\": { 
+    \"enabled\": false
+  },
+  \"analyticsSupport\": {
+    \"enabled\": false
+  }
+ }
+}
+" > /opt/msys/app/webhooks-api/config/production.json
+
+
+# Note that you can edit this here if you want to configure a specific Webhook profile,
+#   Otherwise, this will just create this sample file
+echo "
+[
+ {
+  \"name\": \"My example webhook #1\",
+  \"events\": [\"policy_rejection\", \"bounce\", \"delay\"],
+  \"target\": \"https://example-domain.com/path/to/endpoint\",
+  \"custom_headers\": {
+    \"x-api-key\": \"4194cf7d-f0ce-427c-a026-a11faa6c437e\"
+  }
+ },
+ {
+ \"name\": \"My example webhook #2\",
+ \"events\": [\"open\", \"click\"],
+ \"target\": \"https://your-consumer-domain.com/path/to/your/code\"
+ },
+ {
+ \"name\": \"My example webhook #3\",
+ \"events\": [
+  \"delivery\", \"injection\", \"bounce\", \"delay\", \"policy_rejection\",
+  \"out_of_band\", \"open\", \"click\",
+  \"generation_failure\", \"generation_rejection\", \"spam_complaint\",
+  \"ad_status\", \"ad_adjust\",
+  \"link_unsubscribe\", \"sms_status\"
+  ],
+ \"target\":\"https://your-consumer-domain2.com/all/events/path/to/your/code\"
+ }
+]
+" >  /opt/msys/app/webhooks-api/config/webhooks.json
+
+echo '{}' >  /opt/msys/app/webhooks-etl/config/production.json
+
+echo "
+  Validating JSON formats:
+  "
+
+cat /opt/msys/app/webhooks-api/config/production.json | /opt/msys/3rdParty/bin/jq "."
+cat /opt/msys/app/webhooks-api/config/webhooks.json | /opt/msys/3rdParty/bin/jq "."
+cat /opt/msys/app/webhooks-etl/config/production.json | /opt/msys/3rdParty/bin/jq "."
+
+sudo service msys-app-webhooks-api restart
+sudo service msys-app-webhooks-etl restart
+
+read -t 5 -p "Waiting 5 seconds before continuing ..."
+tail /var/log/msys-nodejs/webhooks-etl.js.log
+tail /var/log/msys-nodejs/webhooks-api.js.log
+
+
+echo "Webhooks installation complete"
+
 
