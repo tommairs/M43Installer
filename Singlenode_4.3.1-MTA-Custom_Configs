@@ -314,7 +314,7 @@ service ecelerity restart
 
 echo 
 echo 
-echo "Installation complete!"
+echo "Installation complete"
 echo 
 echo 
 cat /etc/motd
