@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is a SUPLIMENTAL installer for Momo 4.3.1 MTA
+# This is a SUPPLEMENTAL installer for Momo 4.3.1 MTA
 #   in order to add Transmissions API, Engagement Tracking, SMTP-API, Nginx
 #
 # NOTE: The core 4.3.1 MTA MUST be installed first.
