@@ -402,6 +402,8 @@ $USERNAME <$EMAIL>
 
 echo "
 echo \"version\" |/opt/msys/ecelerity/bin/ec_console
+ifconfig |grep ether
+uname -a
 echo " > /etc/motd.sh
 
 echo "sh /etc/motd.sh" >> /etc/profile
