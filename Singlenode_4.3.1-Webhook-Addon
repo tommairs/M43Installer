@@ -37,7 +37,7 @@ tar -zxf momentum-4.3.x-webhooks*
 cd momentum-4.3.x-webhooks
 
 ./setrepodir
-
+yum install -y ../momentum-mta-4.3.1.69410/packages/msys-erlang-16.2-3.rhel7.x86_64.rpm 
 yum install -y --config momentum.repo --enablerepo momentum \
 msys-rabbitmq \
 msys-app-webhooks-api \
