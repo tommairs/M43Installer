@@ -27,8 +27,10 @@ NODENAME=$PRIVATEIP
 
 
 # Enabling the Transmissions API:
+mkdir /opt/msys/ecelerity/etc/conf/default/conf.d/
 cp /opt/msys/ecelerity/etc/sample-configs/default/msg_gen.conf /opt/msys/ecelerity/etc/conf/default/conf.d/
 cd /opt/msys/ecelerity/etc/conf/default/conf.d/
+echo "include \"conf.d\"" >> ../ecelerity.conf 
 sed -i "s/__EXTERNAL_DNS_HOSTNAME__/$MYFQDN/" ./msg_gen.conf
 sed -i "s/^.*#UNCOMMENT-AS-NEEDED.*mta_id = 1\s .*\}$/  node $NODENAME \{ mta_id = 1  votes = 1 \} /" ./msg_gen.conf
 sed -i "s/cluster_cfg = true/cluster_cfg = false/" ./msg_gen.conf
