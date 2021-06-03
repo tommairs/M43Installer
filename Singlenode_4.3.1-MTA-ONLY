@@ -8,6 +8,9 @@
 # Please read through this script first to make sure you know what it is doing
 # Make any variable changes before running it.  
 #
+# Note that this works best if you download or SCP the momentum install 
+# bundles to /var/tmp before starting.
+#
 # Also - If you need to provide SSH access pay attention to the configuration
 # lines startig approximately line 315
 #####################################################################
